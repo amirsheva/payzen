@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart'; // <-- برای فیلتر کردن ورودی
 import 'package:payzen/api_service.dart';
 
 class AddDebtScreen extends StatefulWidget {
@@ -73,7 +74,9 @@ class _AddDebtScreenState extends State<AddDebtScreen> {
                 TextFormField(
                   controller: _totalAmountController,
                   decoration: const InputDecoration(labelText: 'Total Amount', border: OutlineInputBorder()),
-                  keyboardType: TextInputType.number,
+                  keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                  // --- فقط اعداد و نقطه را قبول می‌کند ---
+                  inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'^\d+\.?\d{0,2}'))],
                   validator: (value) {
                     if (value == null || value.isEmpty || double.tryParse(value) == null) {
                       return 'Please enter a valid amount';
@@ -86,6 +89,8 @@ class _AddDebtScreenState extends State<AddDebtScreen> {
                   controller: _installmentsController,
                   decoration: const InputDecoration(labelText: 'Number of Installments', border: OutlineInputBorder()),
                   keyboardType: TextInputType.number,
+                  // --- فقط اعداد صحیح را قبول می‌کند ---
+                  inputFormatters: [FilteringTextInputFormatter.digitsOnly],
                   validator: (value) {
                     if (value == null || value.isEmpty || int.tryParse(value) == null) {
                       return 'Please enter a valid number';
@@ -98,7 +103,10 @@ class _AddDebtScreenState extends State<AddDebtScreen> {
                     ? const CircularProgressIndicator()
                     : ElevatedButton(
                         onPressed: _handleSaveDebt,
-                        style: ElevatedButton.styleFrom(minimumSize: const Size(double.infinity, 50)),
+                        style: ElevatedButton.styleFrom(
+                          minimumSize: const Size(double.infinity, 50),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        ),
                         child: const Text('Save Debt'),
                       )
               ],

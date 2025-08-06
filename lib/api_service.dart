@@ -64,7 +64,6 @@ class ApiService {
     return [];
   }
 
-  // --- متد جدید برای ساخت بدهی ---
   Future<bool> createDebt({
     required String debtName,
     required double totalAmount,
@@ -75,12 +74,23 @@ class ApiService {
         'debt_name': debtName,
         'total_amount': totalAmount,
         'number_of_installments': numberOfInstallments,
-        'interest_rate': 0, // فعلا سود را صفر در نظر می‌گیریم
-        'start_date': DateTime.now().toIso8601String(), // تاریخ شروع را امروز قرار می‌دهیم
+        'interest_rate': 0,
+        'start_date': DateTime.now().toIso8601String(),
       });
       return response.statusCode == 201;
     } catch (e) {
       print('Error creating debt: $e');
+      return false;
+    }
+  }
+
+  // --- متد جدید برای حذف بدهی ---
+  Future<bool> deleteDebt(int id) async {
+    try {
+      final response = await _dio.delete('/debts/$id');
+      return response.statusCode == 200;
+    } catch (e) {
+      print('Error deleting debt: $e');
       return false;
     }
   }

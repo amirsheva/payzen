@@ -26,12 +26,25 @@ class _DashboardScreenState extends State<DashboardScreen> {
     });
   }
 
+  void _handleDelete(int id) async {
+    final success = await _apiService.deleteDebt(id);
+    if (success && mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Debt deleted successfully!'), backgroundColor: Colors.green),
+      );
+      _loadDebts(); // Refresh the list
+    } else if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Failed to delete debt.'), backgroundColor: Colors.red),
+      );
+    }
+  }
+
   void _navigateAndRefresh() async {
     final result = await Navigator.of(context).push<bool>(
       MaterialPageRoute(builder: (ctx) => const AddDebtScreen()),
     );
 
-    // اگر از صفحه افزودن بدهی با موفقیت برگشتیم، لیست را رفرش کن
     if (result == true) {
       _loadDebts();
     }
@@ -51,7 +64,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Dashboard'),
+        title: const Text('My Debts'),
         automaticallyImplyLeading: false,
         actions: [
           IconButton(
@@ -81,15 +94,32 @@ class _DashboardScreenState extends State<DashboardScreen> {
             itemCount: debts.length,
             itemBuilder: (context, index) {
               final debt = debts[index];
-              return Card(
-                margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                child: ListTile(
-                  title: Text(debt['debt_name'] ?? 'No Name'),
-                  subtitle: Text('Total Amount: ${debt['total_amount']}'),
-                  trailing: const Icon(Icons.arrow_forward_ios),
-                  onTap: () {
-                    print('Tapped on debt: ${debt['id']}');
-                  },
+              // --- ویجت جدید برای حذف با کشیدن ---
+              return Dismissible(
+                key: ValueKey(debt['id']),
+                direction: DismissDirection.endToStart,
+                background: Container(
+                  color: Colors.redAccent,
+                  alignment: Alignment.centerRight,
+                  padding: const EdgeInsets.only(right: 20.0),
+                  margin: const EdgeInsets.symmetric(vertical: 6),
+                  child: const Icon(Icons.delete_sweep, color: Colors.white),
+                ),
+                onDismissed: (direction) {
+                  _handleDelete(debt['id']);
+                },
+                child: Card(
+                  elevation: 2,
+                  margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+                  child: ListTile(
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                    title: Text(debt['debt_name'] ?? 'No Name', style: const TextStyle(fontWeight: FontWeight.bold)),
+                    subtitle: Text('Total: ${debt['total_amount']} - Installments: ${debt['installments']?.length ?? 0}'),
+                    trailing: const Icon(Icons.arrow_forward_ios, size: 16, color: Colors.grey),
+                    onTap: () {
+                      print('Tapped on debt: ${debt['id']}');
+                    },
+                  ),
                 ),
               );
             },
