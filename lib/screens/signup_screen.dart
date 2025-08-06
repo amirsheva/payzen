@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
-import '../api_service.dart';
-import 'login_screen.dart'; // <-- فایل صفحه ورود را import می‌کنیم
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:payzen/api_service.dart';
+import 'package:payzen/screens/login_screen.dart';
+import 'package:payzen/screens/dashboard_screen.dart';
 
 class SignUpScreen extends StatefulWidget {
   const SignUpScreen({super.key});
-
   @override
   State<SignUpScreen> createState() => _SignUpScreenState();
 }
@@ -17,21 +18,46 @@ class _SignUpScreenState extends State<SignUpScreen> {
   final _confirmPasswordController = TextEditingController();
   
   final ApiService _apiService = ApiService();
+  final _storage = const FlutterSecureStorage();
   bool _isPasswordVisible = false;
   bool _isConfirmPasswordVisible = false;
   bool _isLoading = false;
 
   void _handleSignUp() async {
-    if (_formKey.currentState!.validate()) {
-      setState(() { _isLoading = true; });
+    if (!_formKey.currentState!.validate()) return;
 
-      final name = _nameController.text;
-      final email = _emailController.text;
-      final password = _passwordController.text;
+    setState(() { _isLoading = true; });
 
-      print('Signing up with: $name, $email');
-      await _apiService.registerUser(name, email, password);
+    final name = _nameController.text;
+    final email = _emailController.text;
+    final password = _passwordController.text;
 
+    final bool isSuccess = await _apiService.registerUser(name, email, password);
+
+    if (isSuccess && mounted) {
+      final token = await _apiService.login(email, password);
+      if (token != null && mounted) {
+        await _storage.write(key: 'jwt_token', value: token);
+        print('Auto-login successful, token saved!');
+        
+        Navigator.of(context).pushReplacement(
+          MaterialPageRoute(builder: (ctx) => const DashboardScreen()),
+        );
+      } else if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Registration successful! Please log in.')),
+        );
+        Navigator.of(context).pushReplacement(
+          MaterialPageRoute(builder: (ctx) => const LoginScreen()),
+        );
+      }
+    } else if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Registration failed. The email might already be taken.')),
+      );
+    }
+
+    if (mounted) {
       setState(() { _isLoading = false; });
     }
   }
@@ -124,7 +150,6 @@ class _SignUpScreenState extends State<SignUpScreen> {
                         child: const Text('Sign Up'),
                       ),
                 const SizedBox(height: 16),
-                // --- بخش تصحیح شده ---
                 TextButton(
                   onPressed: () {
                     Navigator.of(context).push(

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
-import '../api_service.dart';
+import 'package:payzen/api_service.dart';
+import 'package:payzen/screens/dashboard_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -24,20 +25,19 @@ class _LoginScreenState extends State<LoginScreen> {
 
       final email = _emailController.text;
       final password = _passwordController.text;
-      
-      // --- لاگ اضافه شده برای دیباگ ---
-      print('Attempting to log in with Email: $email | Password: $password');
-      // ------------------------------------
 
       final token = await _apiService.login(email, password);
 
       setState(() { _isLoading = false; });
 
-      if (token != null) {
+      if (token != null && mounted) {
         await _storage.write(key: 'jwt_token', value: token);
         print('Token saved successfully!');
-        // در آینده، اینجا به صفحه داشبورد منتقل می‌شویم
-      } else {
+        
+        Navigator.of(context).pushReplacement(
+          MaterialPageRoute(builder: (ctx) => const DashboardScreen()),
+        );
+      } else if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Login failed. Please check your credentials.')),
         );
@@ -82,9 +82,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   border: const OutlineInputBorder(),
                   suffixIcon: IconButton(
                     icon: Icon(_isPasswordVisible ? Icons.visibility : Icons.visibility_off),
-                    onPressed: () {
-                      setState(() { _isPasswordVisible = !_isPasswordVisible; });
-                    },
+                    onPressed: () { setState(() { _isPasswordVisible = !_isPasswordVisible; }); },
                   ),
                 ),
                 obscureText: !_isPasswordVisible,

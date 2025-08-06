@@ -1,11 +1,22 @@
 import 'package:dio/dio.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 class ApiService {
-  // برای شبیه‌ساز iOS از localhost استفاده کنید.
-  // برای شبیه‌ساز اندروید از 10.0.2.2 استفاده کنید.
   final Dio _dio = Dio(BaseOptions(baseUrl: 'http://localhost:3000'));
+  final _storage = const FlutterSecureStorage();
 
-  /// متد برای ثبت‌نام کاربر جدید
+  ApiService() {
+    _dio.interceptors.add(InterceptorsWrapper(
+      onRequest: (options, handler) async {
+        final token = await _storage.read(key: 'jwt_token');
+        if (token != null) {
+          options.headers['Authorization'] = 'Bearer $token';
+        }
+        return handler.next(options);
+      },
+    ));
+  }
+
   Future<bool> registerUser(String name, String email, String password) async {
     try {
       final response = await _dio.post('/users', data: {
@@ -13,45 +24,64 @@ class ApiService {
         'email': email,
         'password': password,
       });
-
-      if (response.statusCode == 201) {
-        print('SUCCESS: User created successfully: ${response.data}');
-        return true;
-      }
-    } on DioException catch (e) {
-      // مدیریت خطای ایمیل تکراری
-      if (e.response?.statusCode == 409) {
-        print('ERROR creating user: This email is already registered.');
-      } else {
-        print('ERROR creating user: ${e.response?.data}');
-      }
+      return response.statusCode == 201;
+    } catch (e) {
+      print('Error registering user: $e');
+      return false;
     }
-    return false;
   }
 
-  /// متد برای ورود کاربر و دریافت توکن
   Future<String?> login(String email, String password) async {
     try {
       final response = await _dio.post('/auth/login', data: {
         'email': email,
         'password': password,
       });
-
-      if (response.statusCode == 200 && response.data['access_token'] != null) {
-        // اگر موفق بود، توکن را برگردان
+      if (response.statusCode == 201 && response.data['access_token'] != null) {
         final token = response.data['access_token'];
-        print('Login successful, token received!');
+        await _storage.write(key: 'jwt_token', value: token);
         return token;
       }
-    } on DioException catch (e) {
-      // مدیریت خطای عدم مجوز (ایمیل یا پسورد اشتباه)
-      if (e.response?.statusCode == 401) {
-        print('Error logging in: Invalid credentials.');
-      } else {
-        print('Error logging in: ${e.response?.data}');
-      }
+    } catch (e) {
+      print('Error logging in: $e');
     }
-    // اگر ناموفق بود، null برگردان
     return null;
+  }
+
+  Future<void> logout() async {
+    await _storage.delete(key: 'jwt_token');
+  }
+
+  Future<List<dynamic>> getDebts() async {
+    try {
+      final response = await _dio.get('/debts');
+      if (response.statusCode == 200) {
+        return response.data;
+      }
+    } catch (e) {
+      print('Error fetching debts: $e');
+    }
+    return [];
+  }
+
+  // --- متد جدید برای ساخت بدهی ---
+  Future<bool> createDebt({
+    required String debtName,
+    required double totalAmount,
+    required int numberOfInstallments,
+  }) async {
+    try {
+      final response = await _dio.post('/debts', data: {
+        'debt_name': debtName,
+        'total_amount': totalAmount,
+        'number_of_installments': numberOfInstallments,
+        'interest_rate': 0, // فعلا سود را صفر در نظر می‌گیریم
+        'start_date': DateTime.now().toIso8601String(), // تاریخ شروع را امروز قرار می‌دهیم
+      });
+      return response.statusCode == 201;
+    } catch (e) {
+      print('Error creating debt: $e');
+      return false;
+    }
   }
 }
