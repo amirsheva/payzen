@@ -1,6 +1,7 @@
-import 'package:flutter/material.dart';
+import 'package:flutter/material.dart'; // <-- مسیر صحیح این است
 import 'package:payzen/api_service.dart';
 import 'package:payzen/screens/add_debt_screen.dart';
+import 'package:payzen/screens/debt_details_screen.dart';
 import 'package:payzen/screens/welcome_screen.dart';
 
 class DashboardScreen extends StatefulWidget {
@@ -32,7 +33,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Debt deleted successfully!'), backgroundColor: Colors.green),
       );
-      _loadDebts(); // Refresh the list
+      _loadDebts();
     } else if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Failed to delete debt.'), backgroundColor: Colors.red),
@@ -94,7 +95,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
             itemCount: debts.length,
             itemBuilder: (context, index) {
               final debt = debts[index];
-              // --- ویجت جدید برای حذف با کشیدن ---
               return Dismissible(
                 key: ValueKey(debt['id']),
                 direction: DismissDirection.endToStart,
@@ -105,6 +105,27 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   margin: const EdgeInsets.symmetric(vertical: 6),
                   child: const Icon(Icons.delete_sweep, color: Colors.white),
                 ),
+                confirmDismiss: (direction) async {
+                  return await showDialog(
+                    context: context,
+                    builder: (BuildContext context) {
+                      return AlertDialog(
+                        title: const Text("Confirm Delete"),
+                        content: const Text("Are you sure you want to delete this debt?"),
+                        actions: <Widget>[
+                          TextButton(
+                            onPressed: () => Navigator.of(context).pop(false),
+                            child: const Text("Cancel"),
+                          ),
+                          TextButton(
+                            onPressed: () => Navigator.of(context).pop(true),
+                            child: const Text("Delete"),
+                          ),
+                        ],
+                      );
+                    },
+                  );
+                },
                 onDismissed: (direction) {
                   _handleDelete(debt['id']);
                 },
@@ -117,7 +138,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     subtitle: Text('Total: ${debt['total_amount']} - Installments: ${debt['installments']?.length ?? 0}'),
                     trailing: const Icon(Icons.arrow_forward_ios, size: 16, color: Colors.grey),
                     onTap: () {
-                      print('Tapped on debt: ${debt['id']}');
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (ctx) => DebtDetailsScreen(
+                            debtId: debt['id'],
+                            debtName: debt['debt_name'] ?? 'Details',
+                          ),
+                        ),
+                      );
                     },
                   ),
                 ),

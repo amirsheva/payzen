@@ -84,7 +84,6 @@ class ApiService {
     }
   }
 
-  // --- متد جدید برای حذف بدهی ---
   Future<bool> deleteDebt(int id) async {
     try {
       final response = await _dio.delete('/debts/$id');
@@ -93,5 +92,18 @@ class ApiService {
       print('Error deleting debt: $e');
       return false;
     }
+  }
+
+  // --- متد جدید برای گرفتن جزئیات یک بدهی ---
+  Future<Map<String, dynamic>?> getDebtDetails(int id) async {
+    try {
+      final response = await _dio.get('/debts/$id');
+      if (response.statusCode == 200) {
+        return response.data;
+      }
+    } catch (e) {
+      print('Error fetching debt details: $e');
+    }
+    return null; // در صورت خطا، null برگردان
   }
 }
