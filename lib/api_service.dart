@@ -48,6 +48,23 @@ class ApiService {
     return null;
   }
 
+  // --- متد جدید برای ورود سریع ---
+  Future<String?> quickLogin(String email) async {
+    try {
+      final response = await _dio.post('/auth/quick-login', data: {
+        'email': email,
+      });
+      if (response.statusCode == 201 && response.data['access_token'] != null) {
+        final token = response.data['access_token'];
+        await _storage.write(key: 'jwt_token', value: token);
+        return token;
+      }
+    } catch (e) {
+      print('Error during quick login: $e');
+    }
+    return null;
+  }
+
   Future<void> logout() async {
     await _storage.delete(key: 'jwt_token');
   }
@@ -94,7 +111,6 @@ class ApiService {
     }
   }
 
-  // --- متد جدید برای گرفتن جزئیات یک بدهی ---
   Future<Map<String, dynamic>?> getDebtDetails(int id) async {
     try {
       final response = await _dio.get('/debts/$id');
@@ -104,6 +120,18 @@ class ApiService {
     } catch (e) {
       print('Error fetching debt details: $e');
     }
-    return null; // در صورت خطا، null برگردان
+    return null;
+  }
+
+  Future<List<dynamic>> getUsers() async {
+    try {
+      final response = await _dio.get('/users');
+      if (response.statusCode == 200) {
+        return response.data;
+      }
+    } catch (e) {
+      print('Error fetching users: $e');
+    }
+    return [];
   }
 }

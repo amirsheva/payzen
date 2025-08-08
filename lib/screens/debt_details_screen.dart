@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../api_service.dart';
+import 'package:payzen/api_service.dart'; // <-- مسیر صحیح این است
 
 class DebtDetailsScreen extends StatefulWidget {
   final int debtId;
@@ -39,7 +39,7 @@ class _DebtDetailsScreenState extends State<DebtDetailsScreen> {
             return const Center(child: CircularProgressIndicator());
           }
           if (snapshot.hasError || !snapshot.hasData || snapshot.data == null) {
-            return const Center(child: Text('Could not load details.'));
+            return const Center(child: Text('امکان دریافت جزئیات وجود نداشت.'));
           }
 
           final debtDetails = snapshot.data!;
@@ -53,12 +53,12 @@ class _DebtDetailsScreenState extends State<DebtDetailsScreen> {
               const SizedBox(height: 24),
               // بخش لیست اقساط
               Text(
-                'Installments',
+                'اقساط',
                 style: Theme.of(context).textTheme.titleLarge,
               ),
               const Divider(),
               if (installments.isEmpty)
-                const Text('No installments found for this debt.')
+                const Text('قسطی برای این بدهی یافت نشد.')
               else
                 ...installments.map((inst) => _buildInstallmentTile(inst)),
             ],
@@ -77,9 +77,9 @@ class _DebtDetailsScreenState extends State<DebtDetailsScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _buildInfoRow('Total Amount:', details['total_amount']),
-            _buildInfoRow('Installments:', '${details['number_of_installments']}'),
-            _buildInfoRow('Status:', details['status']),
+            _buildInfoRow('مبلغ کل:', '${details['total_amount']} تومان'),
+            _buildInfoRow('تعداد اقساط:', '${details['number_of_installments']}'),
+            _buildInfoRow('وضعیت:', details['status']),
           ],
         ),
       ),
@@ -108,8 +108,8 @@ class _DebtDetailsScreenState extends State<DebtDetailsScreen> {
         backgroundColor: isPaid ? Colors.green : Colors.orange,
         child: Text('${installment['installment_number']}'),
       ),
-      title: Text('Amount: ${installment['amount_due']}'),
-      subtitle: Text('Due Date: ${installment['due_date']}'), // TODO: Format date
+      title: Text('مبلغ: ${installment['amount_due']} تومان'),
+      subtitle: Text('تاریخ سررسید: ${installment['due_date']}'), // TODO: Format date
       trailing: Checkbox(
         value: isPaid,
         onChanged: (value) {

@@ -1,7 +1,7 @@
-import 'package:flutter/material.dart'; // <-- مسیر صحیح این است
+import 'package:flutter/material.dart';
 import 'package:payzen/api_service.dart';
 import 'package:payzen/screens/add_debt_screen.dart';
-import 'package:payzen/screens/debt_details_screen.dart';
+import 'package:payzen/screens/debt_details_screen.dart'; // <-- صفحه جزئیات را import کنید
 import 'package:payzen/screens/welcome_screen.dart';
 
 class DashboardScreen extends StatefulWidget {
@@ -137,6 +137,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     title: Text(debt['debt_name'] ?? 'No Name', style: const TextStyle(fontWeight: FontWeight.bold)),
                     subtitle: Text('Total: ${debt['total_amount']} - Installments: ${debt['installments']?.length ?? 0}'),
                     trailing: const Icon(Icons.arrow_forward_ios, size: 16, color: Colors.grey),
+                    // --- تغییر کلیدی اینجاست ---
                     onTap: () {
                       Navigator.of(context).push(
                         MaterialPageRoute(
